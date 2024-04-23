@@ -1,0 +1,73 @@
+﻿@inject PeopleDataService PeopleDS
+
+@if (People == null)
+{
+    <div><span>Loading...</span></div>
+}
+else
+{
+    <div style="margin: 1em;">
+        <IgbGrid Data="People" PrimaryKey="ID" Height="300px" DisplayDensity="DisplayDensity.Compact" AutoGenerate="false"
+                 CellClick="((e) => OnCellClickedAsync(e))">
+            <IgbColumn Field="@nameof(Person.ID)" Header="ID" />
+            <IgbColumn Field="@nameof(Person.FamilyName)" Header="FamilyName" />
+            <IgbColumn Field="@nameof(Person.GivenName)" Header="GivenName" />
+            <IgbColumn Field="@nameof(Person.Prefecture)" Header="Prefecture" />
+            <IgbColumn Field="@nameof(Person.City)" Header="City" />
+        </IgbGrid>
+    </div>
+}
+
+@if (this.ClickedPerson != null)
+{
+    <div style="margin: 1em;">
+        <h4>クリックされたセルに紐づいたデータ</h4>
+        <div>
+            <span>行ID = @ClickedRowID</span>
+        </div>
+        <div class="table_with_border">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>FamilyName</th>
+                        <th>GivenName</th>
+                        <th>Prefecture</th>
+                        <th>City</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@ClickedPerson.ID</td>
+                        <td>@ClickedPerson.FamilyName</td>
+                        <td>@ClickedPerson.GivenName</td>
+                        <td>@ClickedPerson.Prefecture</td>
+                        <td>@ClickedPerson.City</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    private IEnumerable<Person>? People = null;
+    private Person? ClickedPerson = null;
+    private int? ClickedRowID = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.People = await PeopleDS.GetPeopleAsync();
+    }
+
+    private async Task OnCellClickedAsync(IgbGridCellEventArgs e)
+    {
+        if (!Int32.TryParse(e.Detail.Cell.Id.RowID, out int rowID)) return;
+        this.ClickedRowID = rowID;
+        var igbGrid = e.Parent as IgbGrid;
+        if (igbGrid == null) return;
+
+        var rowType = await igbGrid.GetRowByKeyAsync(rowID);
+        this.ClickedPerson = rowType.Data as Person;
+    }
+}
